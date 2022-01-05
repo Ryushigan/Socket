@@ -1,0 +1,7 @@
+Untuk kodingan sniffer.py, jika dijalankan dengan OS Windows 
+diharapkan agar di-run dengan privileges admin (dikarenakan kurangnya privileges
+untuk mengakses socket)
+
+Cara Kerja singkat:
+Socket dibuka untuk IP device tersebut dan dilakukan "sniffing" pada seluruh port
+yang dapat disniff dan terdapat koneksi.
