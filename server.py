@@ -1,69 +1,76 @@
 import socket
-import sys
-import time
+from threading import Thread
 
-# Library "socket" digunakan karena "socket" memiliki fungsi-fungsi yang diperlukan dalam mengimplementasikan socket.
-# Library "sys" digunakan untuk menyediakan system module yang berguna dalam menyediakan data yang berhubungan dengan system (directory, functions, methods).
-# Library "time" digunakan untuk mengolah unit atau deskripsi waktu yang akan digunakan nantinya.
+username = ""
+uletIP = ""
+uletPort = 0
+keketIP = ""
+keketPort = 0
 
-NewSocket = socket.socket()
-HostName = socket.gethostname()
-IPAddress = socket.gethostbyname(HostName)
+print("Welcome back, Server, which chat do you want to host / connect to?")
+print("1. Ulet")
+print("2. Keket")
 
-# Pertama-tama, kita dapat mulai membuat socket, hal ini dapat kita lihat pada function "socket.socket()"
-# Selain membuat socket, kita juga kemudian dapat menentukan hostname dengan function "socket.gethostname()", yang merupakan bagian dari library socket juga
-# Setelah membuat socket dan menentukan hostname, kita kemudian dapat mengambil IP address user lain dan menyimpannya ke dalam "IPAddress"
+chatTarget = input(">> ")
+# print(f"your target: {chatTarget}")
+# print(type(chatTarget))
 
-port = 8081
+if chatTarget == '1':
+    uletSocket = socket.socket()
+    uletIP = "127.0.0.1"
+    uletPort = 8080
+    username = "Ulet"
+    # print(uletIP)
+    # print(uletPort)
+    uletSocket.bind((uletIP, uletPort))
+    uletSocket.listen(3)
+    client, addr = uletSocket.accept()
+    # print(client)
+    # print(addr)
+elif chatTarget == '2':
+    keketSocket = socket.socket()
+    keketIP = "127.0.0.1"
+    keketPort = 8081
+    username = "Keket"
+    # print(keketIP)
+    # print(keketPort)
+    keketSocket.bind((keketIP, keketPort))
+    keketSocket.listen(3)
+    client, addr = keketSocket.accept()
+    # print(client)
+    # print(addr)
+else:
+    print("Invalid chat, please try again")
 
-# Untuk port yang digunakan, port 8081 dipilih dikarenakan kebanyakan mesin/device memiliki port 8081 yang kosong / tidak digunakan. 
-# Pada kasus ini, port yang digunakan untuk menghubungkan ke Proxy adalah 8081
 
-NewSocket.bind((HostName, port))
+print(f"{username} has connected..")
+# print(chatTarget)
 
-# Kemudian kita dapat menyambungkan port dan host dengan function "bind".
+def readMessage(client: socket.socket):
+    while True:
+        message = client.recv(1024).decode()
+        if message == "exit":
+            client.close()
+            break
+        print(f"\n{username}: {message}\nYou: ", end='')
+        # print(message, end='')
 
-print("Binding complete!")
-print("Your current IP: ", IPAddress)
+def sendMessage(client: socket.socket):
+    while True:
+        message = input('You: ')
+        if message == "exit":
+            client.close()
+            print("Thank you")
+            break
+        client.send(message.encode())
 
-# Kedua command di atas digunakan untuk memastikan bahwa process "Binding" berhasil dan kemudian menunjukkan IP Address dari pengguna tersebut
+tr = Thread(target=readMessage, args=(client, ))
+ts = Thread(target=sendMessage, args=(client, ))
 
-NewSocket.listen(2)
+tr.start()
+ts.start()
 
-# Kemudian, "NewSocket.listen(1)" digunakan untuk melakukan proses "listen". Parameter "1" dapat digantikan dengan angka lain (1, 2, 3, ...)
+# tr.join()
+# ts.join()
 
-Connect, Add = NewSocket.accept()
-
-# Selanjutnya, jika sebuah user berhasil ter-connect, maka user tersebut akan dimasukkan ke variable "Connect" dan "Add", dimana kemudian akan ada sejenis 
-# "list" dari user yang sudah berhasil connect
-
-print("Received connection from ", Add[0])
-print("Connection Established. Connected From: ",Add[0])
-
-# Kedua command di atas digunakan untuk menunjukkan apakah koneksi dari user ke-[x] sudah diterima, dan apakah koneksi tersebut sudah berhasil disambungkan.
-
-Client = (Connect.recv(1024)).decode()
-print(Client + " has joined the chat.")
-
-# Command diatas digunakan untuk menerima "message" dari Client, dimana pada kali ini adalah nama/username dari client tersebut yang sudah dioper dari client ke proxy
-
-Username = input("Please enter your name: ")
-Connect.send(Username.encode())
-
-# Selanjutnya, server/host dapat mengirimkan usernamenya kepada proxy yang kemudian akan dioper ke client
-
-while True:
-    message = input("You: ")
-    Connect.send(message.encode())
-    message = Connect.recv(1024)
-    message = message.decode()
-    print(Client, ":", message)
-
-# Terakhir, saat pengguna memasukkan/mengirimkan pesannya, pesan tersebut akan diencode dengan menggunakan fucntion "encode()" dan disend menggunakan function "send()".
-# Dalam menerima pesan, function yang digunakan adalah "recv()", yang dapat menerima informasi sebesar 1024 bytes, yang kemudian akan di-decode menggunakan function "decode()".
-
-# Referensi:
-# https://www.thepythoncode.com/article/make-a-chat-room-application-in-python
-# https://www.askpython.com/python/examples/create-chatroom-in-python
-# https://pymotw.com/2/socket/tcp.html
-# https://www.geeksforgeeks.org/simple-chat-room-using-python/
+# print("Thank you")

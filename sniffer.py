@@ -1,15 +1,12 @@
 import socket
 import os
 import re
-
 # "re" dalam kasus ini digunakan untuk proses peng-ekstraksian string pada tahap-tahap akhir codingan ini
 
 # Pertama-tama, kita men-declare host yang ingin kita "listen"
-host = socket.gethostname()
-hostIP = socket.gethostbyname(host)
+hostIP = "127.0.0.1"
 
 # Hanya untuk melakukan pengecekan:
-# print(host)
 # print(hostIP)
 
 # Setelah itu, kita dapat mulai membuat socket untuk mencari koneksi, dan melakukan binding dengan public interface
@@ -18,14 +15,17 @@ if os.name == "nt":
 else:
     socket_protocol = socket.IPPROTO_ICMP
 
-# Pengkondisian IF di atas digunakan untuk mengecek OS yang akan melakukan/menjalankan sniffing. Dalam kasus ini, device saya akan mengikuti statement If yang pertama dikarenakan saya menggunakan OS Windows, 
+# Pengkondisian IF di atas digunakan untuk mengecek OS yang akan melakukan/menjalankan sniffing. Dalam kasus ini, 
+# device saya akan mengikuti statement If yang pertama dikarenakan saya menggunakan OS Windows, 
 # maka dari itu, dapat dilakukan proses sniff untuk semua packet dimana Linux hanya memperbolehkan sniffing ICMP
 
 sniffer = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket_protocol)
-sniffer.bind ((hostIP,0))
+sniffer.bind ((hostIP,8080))
 
-# Pada kasus ini, socket yang digunakan oleh sniffer memiliki sebuah parameter tambahan, "socket_protocol", yang digunakan untuk memilih protokol yang akan kita gunakan, yang sudah kita declare pada bagian awal koding
-# Selanjutnya, untuk proses bind, kita tidak akan memilih port yang spesifik (0) dikarenakan kita sebagai sniffer dianggap tidak mengetahui dimana terjadinya koneksi tersebut
+# Pada kasus ini, socket yang digunakan oleh sniffer memiliki sebuah parameter tambahan, "socket_protocol", 
+# yang digunakan untuk memilih protokol yang akan kita gunakan, yang sudah kita declare pada bagian awal koding
+# Selanjutnya, untuk proses bind, kita tidak akan memilih port yang spesifik (0) dikarenakan kita sebagai 
+# sniffer dianggap tidak mengetahui dimana terjadinya koneksi tersebut
 
 
 # Kemudian, kita dapat meng-include IP Header dalam proses capturenya
@@ -33,8 +33,10 @@ sniffer.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
 if os.name == "nt":
     sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
-# Selanjutnya, kita melakukan pengecekan lagi, jika device yang melakukan sniffing menggunakan OS Windows (nt), maka akan dilakukan tahap pengiriman IOCTL kepada network card driver
-# untuk meng-enable promiscuous mode (sebuah mode operasi yang dapat meng-intercept dan membaca keseluruhan packet yang hadir pada networknya)
+# Selanjutnya, kita melakukan pengecekan lagi, jika device yang melakukan sniffing menggunakan OS Windows (nt), 
+# maka akan dilakukan tahap pengiriman IOCTL kepada network card driver
+# untuk meng-enable promiscuous mode (sebuah mode operasi yang dapat meng-intercept 
+# dan membaca keseluruhan packet yang hadir pada networknya)
 
 # Untuk membaca chattingan yang disniff:
 
@@ -64,42 +66,30 @@ while True:
     # Pertama-tama, saya akan mendeclarekan keseluruhan message yang diterima ke dalam variabel "nonDecodedString"
     preDecodedString = sniffer.recvfrom(65565)
     
-    # Setelah ditelusuri lebih lanjut, ternyata tuples yang diterima memiliki 2 index, maka dari itu, saya hanya akan meng-convert index ke-0 menjadi bytes terlebih dahulu
+    # Setelah ditelusuri lebih lanjut, ternyata tuples yang diterima memiliki 2 index, maka dari itu, 
+    # saya hanya akan meng-convert index ke-0 menjadi bytes terlebih dahulu
     convertedNonDecodedString = bytes(preDecodedString[0])
-    
-    # print("============================")
-    # print(convertedNonDecodedString)
-    # print(type(convertedNonDecodedString))
-    # print("============================\n")
-    
-    print("Full String:")
-    print(convertedNonDecodedString)
-    # Kedua baris di atas dapat di-command jika merasa terlalu ter-spam
 
-    # Setelah ditelusuri lebih lanjut (menggunakan bruteforce mengganti angka pada "convertedNonDecodedString[40:]" dari 1 hingga 40), ternyata isi dari chat yang dikirim oleh server dan client berada pada bytes ke-40, maka dari itu:
-    print("Isi Chat:")
-    print(convertedNonDecodedString[40:])
-    # Command ini digunakan untuk membaca bytes yang diterima hanya dari bytes 40 ke atas.
-    
-    print("==========================")
+    if convertedNonDecodedString[40:] != b'':
+        # print("============================")
+        # print(convertedNonDecodedString)
+        # print(type(convertedNonDecodedString))
+        # print("============================\n")
 
-    # nonDecodedString = convertedNonDecodedString.hex()
-    # print(nonDecodedString)
-    # print(type(nonDecodedString))
+        print("Full String:")
+        print(convertedNonDecodedString)
+        # Kedua baris di atas dapat di-command jika merasa terlalu ter-spam
 
-    # print("==========")
-    # bytes_object = bytes.fromhex(nonDecodedString)
-    # print(bytes_object)
-    # print(type(bytes_object))
-    # print("==========")
+        # Setelah ditelusuri lebih lanjut (menggunakan bruteforce mengganti angka pada 
+        # convertedNonDecodedString[40:]" dari 1 hingga 40),
+        # ternyata isi dari chat yang dikirim oleh server dan client berada pada bytes ke-40, maka dari itu:
+        print("Isi Chat:")
+        print(convertedNonDecodedString[40:])
+        # Command ini digunakan untuk membaca bytes yang diterima hanya dari bytes 40 ke atas.
 
-    # print(nonDecodedString.decode('iso-8859-9'))
-
-    # ascii_string = bytes_object.decode("ASCII")
-    # print(ascii_string)
-    # print(type(ascii_string))
-
-# Setelah selesai, kita dapat mematikan promiscuous mode yang sudah dinyalakan sebelumnya (hanya untuk OS Windows)
+        print("==========================")
+    else:
+        continue
 
 if os.name == "nt":
     sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
@@ -118,37 +108,3 @@ if os.name == "nt":
 # https://www.delftstack.com/howto/python/tuple-to-string-python/#use-the-str.join-function-to-convert-tuple-to-string-in-python
 # https://stackabuse.com/convert-bytes-to-string-in-python/
 # https://stackoverflow.com/questions/20024490/how-to-split-a-byte-string-into-separate-bytes-in-python
-
-
-
-# Coding yang tidak digunakan (mencoba mengubah tuples>bytes>string, yang kemudian string tersebut akan dipotong (./.././././././x00ContohChat > x00ContohChat > ContohChat))
-    # replace = convertedNonDecodedString.replace(b'\x00', b'').decode('ascii')
-    # print(replace)
-
-    # nonDecodedString = convertedNonDecodedString.decode()
-    # # print(nonDecodedString)
-  
-
-    # # nonDecodedString = str(stringedDecodedString, 'utf8')
-    # Terjadi permasalahan di baris ini, pada proses pengubahan Bytes yang sudah diubah dari Tuples menjadi String
-
-    # # Kemudian, saya akan melakukan proses "ekstraksi" string setelah terdapat 28 "/"
-    # K = "e"
-    # N = 28
-    
-    # semiDecodedString = re.split(K, nonDecodedString, N)[-1]
-    # # Fungsi di atas digunakan untuk memisahkan string yang ada setelah bertemu huruf dalam variabel "K" selama "N" kali
-    
-    # # Dalam kasus ini, tentunya masih terdapat string yang memiliki lebih dari 28 "/", maka dari itu, akan dilakukan validasi lebih lanjut
-    # if semiDecodedString.count('/') >= 1:
-    #     newN = semiDecodedString.count('/')
-        
-    #     semiDecodedString = re.split(K, semiDecodedString, newN)[-1]
-
-    # # Jika diperhatikan lebih lanjut, jika sudah terjadi penghapusan string awal, kita masih memiliki huruf "x00" di awal kalimat yang kita terima, maka dari itu, kita dapat menggunakan hal yang sama
-    # newK = "0"
-    # newerN = 2
-
-    # DecodedString = re.split(newK, semiDecodedString, newerN)[-1]
-
-    # print (DecodedString)    
